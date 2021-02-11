@@ -106,7 +106,7 @@ When combining all the components, the finite state machine was used to easily c
 
 
 ![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/FSM.png?raw=true)
-***Figure 2: The robot state machine***
+####*Figure 2: The robot state machine*
 
 [Back To The Top](##Line-Follower-Treasure-Hunt-Robot)
 
@@ -116,7 +116,7 @@ When combining all the components, the finite state machine was used to easily c
 The robot when over 20 tests with `95%` of successful rate and found the treasure within `60 seconds`. The failed test encounters only for the sernario where the IR sensor was perpendicular to the line which made it thought that it hit the treasure and stop as shown in ***Figure 3*** below.  
 
 ![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/cornercase.png?raw=true)
-***Figure 3: Sernario where the robot more likely to fail***
+####*Figure 3: Sernario where the robot more likely to fail**
 
 [Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
 
