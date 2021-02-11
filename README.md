@@ -33,13 +33,13 @@ Design a Line Follower Maze Robot using TI Robotics System Learning Kit. The goa
 
 ### Hardware Tools
 
-- Microcontroller - [MSP432P401R MCU LaunchPad](https://www.raspberrypi.org/products/raspberry-pi-3-model-b-plus/)
-- Line IR sensors - [QTR-8RC](https://www.raspberrypi.org/products/raspberry-pi-3-model-b-plus/)
-- Bump sensor
-- DC Motors
-- GPIO
-- Robot chassis and wheels
+- Microcontroller - [MSP432P401R MCU LaunchPad](https://www.ti.com/tool/MSP-EXP432P401R?ref_url=https%3a%2f%2feducation.ti.com%2fen%2ffaculty%2fti-robotics-system-learning-kit%2fti-robotics-system-learning-kit&_ticdt=MTYxMzA3NDQ3NHxsaXRmYWZhNjNiMGZhZmE2M2IwZmFmYTYzYjA2MDEwOTNiMjQyNmFkNGN8R0ExLjIuNjY1NzAxMTE4LjE2MTMwNzQ0NTR8MA)
+- Line IR sensors - [QTR-8RC](https://www.pololu.com/product/961)
+- Bumper switch - [TI-RSLK](https://www.pololu.com/product/1520)
+- DC Motors - [Mini Plastic Gear Motor](https://www.pololu.com/product/1520)
+- Robot chassis and wheels - [Parts](https://www.pololu.com/product/3502)
 - Rechargeable battery, pack of 6, metal hydride, 1300mAh, 1.2V, AA
+- GPIO & signal LEDs 
 
 [Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
 
@@ -79,9 +79,9 @@ The following **future improvement** features are implemented:
 [Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
 
 ## Methodology
-The first task was to test the reflectance of the sensor. By obtaining the sampling values read from memory, we can categorize the reflectance into nine cases to determine the line positions as shown in ***Table 1*** below.
+The first task was to test the **IR reflectance** of the sensor. By obtaining the sampling values read from memory, we can categorize the reflectance into nine cases to determine the line positions as shown in ***Table 1*** below.
 
-| Cases  |      Position(x)      |
+| Sernarios  |      Position(x)      |
 |:-------------------:|:--------------------------------------------------------------------------------:|
 | The robot stayed at the center (`C`) | `-47` < x < `47` |
 | Slightly off to the left (`SOL`) | `-47` < x < `142` |
@@ -105,7 +105,7 @@ Last but not the least component, two **DC motors** were used to control the rob
 When combining all the components, the finite state machine was used to easily control the robot as shown in ***Figure 2*** below.
 
 
-![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/treasuremap.png?raw=true)
+![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/FSM.png?raw=true)
 ***Figure 2: The robot state machine***
 
 [Back To The Top](##Line-Follower-Treasure-Hunt-Robot)
