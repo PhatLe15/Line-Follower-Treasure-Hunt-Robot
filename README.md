@@ -98,7 +98,7 @@ When the robot stayed at the center position, it should go forward until the nex
 ![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/treasuremap.png?raw=true)
 ***Figure 1: The treasure map***
 
-To handle the wall obstruction, **bumper sensor modules** were needed with S`ystic interrupts` approach to quickly backup and return to the path. Theoretically, when any of the bumps were activated, meaning there was a wall exist, the robot should back up and search for a new path. 
+To handle the wall obstruction, **bumper sensor modules** were needed with `Systic interrupts` approach to quickly backup and return to the path. Theoretically, when any of the bumps were activated, meaning there was a wall exist, the robot should back up and search for a new path. 
 
 Last but not the least component, two **DC motors** were used to control the robot wheel with `PWM` implementation to control the rotation speed as well as different delay time for different sernarios to refine the tracking movement.
 
