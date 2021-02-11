@@ -12,11 +12,7 @@
     - [Hardware Tools](#hardware-tools)
   - [Requirements](#requirements)
   - [Methodology](#methodology)
-  - [Source Code Reference](#source-code-reference)
-    - [camera.c](#camerac)
-    - [microphone.c](#microphonec)
-    - [servo.c](#servoc)
-  - [References](#references)
+  - [Test Result](#test-result)
   - [License](#license)
   - [Author Info](#author-info)
 
@@ -50,10 +46,15 @@ Design a Line Follower Maze Robot using TI Robotics System Learning Kit. The goa
 ---
 
 ## Requirements
+.
+Periodic Timer A1 interrupts to run the high-level strategy.
+Edge triggered interrupts for collisions.
+Main program for debugging and low priority tasks.
 
 The following **required** functionality is complete:
 
 * [x] Interface with the IR reflectance module
+  * [x] Periodic SysTick interrupts to measure the line sensor
   * [x] Read sampling data to local memory
   * [x] Separate into different sernarios to determine the line position
 * [x] Control DC motor
@@ -62,11 +63,17 @@ The following **required** functionality is complete:
 * [x] Control Bumper sensor
   * [x] Able to backup when hitting the wall
   * [x] Retrack and go back to the line if lost
+* [x] Periodic Timer A1 interrupts to run the high-level strategy 
+* [x] Edge triggered interrupts for collisions.
+* [x] Main program for debugging and low priority tasks.
+
 
 The following **future improvement** features are implemented:
-* [ ] Reduce the average time to reach the treasure (`<60second`)
-  * [ ] Refine cornercases for better tracking and drive motor more quickly and efficiently.
+* [x] Reduce the average time to reach the treasure (`<60second`)
+  * [x] Refine cornercases for better tracking and drive motor more quickly and efficiently.
   * [x] Speed up the robot through better algorithm and reduce delay time.
+* [ ] Increase successfull rate to >95%:
+  * [ ] Add more IR sensor that perpendicular to the current sensor to distinguish the black and white line since the fail case is when the robot perpendicular to the line which make it though as treasure and halt.  
 
  
 [Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
@@ -76,256 +83,42 @@ The first task was to test the reflectance of the sensor. By obtaining the sampl
 
 | Cases  |      Position(x)      |
 |:-------------------:|:--------------------------------------------------------------------------------:|
-| The robot stayed at the center | `-47` < x < `47` |
-| Slightly off to the left | `-47` < x < `142` |
-| Slightly off to the right | `47` < x < `142` |
-| Off to the left | 47 <= x <= `142` |
-| Off to the right | `142` < x <= `237` |
-| Way off to the left | `-332` < x <= `-237` |
-| Way off to the right | `237` <= x < `332` |
-| Lost | Data == `0b11111111` && x == `0` |
-| At the treasure’s position | Data == `0x00000000` && x == `333`|
+| The robot stayed at the center (`C`) | `-47` < x < `47` |
+| Slightly off to the left (`SOL`) | `-47` < x < `142` |
+| Slightly off to the right (`SOR`)| `47` < x < `142` |
+| Off to the left (`OL`)| 47 <= x <= `142` |
+| Off to the right (`OR`)| `142` < x <= `237` |
+| Way off to the left (`WOR`)| `-332` < x <= `-237` |
+| Way off to the right (`WOL`) | `237` <= x < `332` |
+| Lost (`L`) | Data == `0b11111111` && x == `0` |
+| At the treasure’s position (*) | Data == `0x00000000` && x == `333`|
 
 When the robot stayed at the center position, it should go forward until the next instruction came. If the robot was not at the center, it should fix its path back to the center. In addition, the robot should be able to handle corner cases such as when it hit the dead end of the line or being obstructed by surrounding object as shown in ***Figure 1*** below. 
 
+![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/treasuremap.png?raw=true)
+***Figure 1: The treasure map***
+
+To handle the wall obstruction, **bumper sensor modules** were needed with S`ystic interrupts` approach to quickly backup and return to the path. Theoretically, when any of the bumps were activated, meaning there was a wall exist, the robot should back up and search for a new path. 
+
+Last but not the least component, two **DC motors** were used to control the robot wheel with `PWM` implementation to control the rotation speed as well as different delay time for different sernarios to refine the tracking movement.
+
+When combining all the components, the finite state machine was used to easily control the robot as shown in ***Figure 2*** below.
 
 
-## Source Code Reference
+![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/treasuremap.png?raw=true)
+***Figure 2: The robot state machine***
 
-### camera.c
-```c
-    static pid_t pid = 0;
-
-void startVideo(char *filename, char *options) {
-    if ((pid = fork()) == 0) {
-        char **cmd;
-
-        // count tokens in options string
-        int count = 0;
-        char *copy;
-
-        copy = strdup(options);
-        if (strtok(copy, " \t") != NULL) {
-            count = 1;
-            while (strtok(NULL, " \t") != NULL)
-                count++;
-        }
-
-        cmd = malloc((count + 8) * sizeof(char **));
-        free(copy);
-
-        // if any tokens in options, 
-        // copy them to cmd starting at positon[1]
-        if (count) {
-            int i;
-            copy = strdup(options);
-            cmd[1] = strtok(copy, " \t");
-            for (i = 2; i <= count; i++)
-                cmd[i] = strtok(NULL, " \t");
-        }
-
-        // add default options
-        cmd[0] = "raspivid"; // executable name
-        cmd[count + 1] = "-n"; // no preview
-        cmd[count + 2] = "-t"; // default time (overridden by -s)
-                               // but needed for clean exit
-        cmd[count + 3] = "10"; // 10 millisecond (minimum) time for -t
-        cmd[count + 4] = "-s"; // enable USR1 signal to stop recording
-        cmd[count + 5] = "-o"; // output file specifer
-        cmd[count + 6] = filename;
-        cmd[count + 7] = (char *)0; // terminator
-        execv("/usr/bin/raspivid", cmd);
-    }
-}
-
-void stopVideo(void) {
-    if (pid) {
-        kill(pid, 10); // seems to stop with two signals separated
-                       // by 1 second if started with -t 10 parameter
-        sleep(1);
-        kill(pid, 10);
-    }
-}
-
-int main(int argc, char **argv) {
-
-    //get current time as name of file and combine with the directory
-    time_t now;
-    time(&now);
-    
-    //set directory
-    char directory[1000] = "/home/pi/Desktop/HelloWorld/videoFolder/";
-    
-    //create name by real time 
-    strcat(directory,ctime(&now));
-    strcat(directory,".h264");
-
-    printf("Recording video for 5 secs...");
-    startVideo(directory, "-cfx 128:128 -rot 180"); 
-    fflush(stdout);
-    sleep(5);//change recording time here
-    stopVideo();
-    printf("\nVideo stopped - exiting in 2 secs.\n");
-    sleep(2);
-    return 0;
-}
-```
-
-### microphone.c
-```c
-bool flag = true;
-
-char *i2c = "/dev/i2c-1";
-void sighandler(int sig){
-  if(sig == SIGINT){
-    flag = false;
-  }else{
-    flag = true;
-  }
-}
-
-int main() {
-  signal(SIGINT, sighandler);
-  int ADS_address = 0x48;   // Address of our device on the I2C bus
-  int I2CFile; //I2c handler
-  
-  uint8_t writeBuf[3];      // Buffer to store the 3 bytes that we write to the I2C device
-  uint8_t readBuf[2];       // 2 byte buffer to store the data read from the I2C device
-  
-  int16_t val;              // Stores the 16 bit value of our ADC conversion
-  
-  I2CFile = open(i2c, O_RDWR);     // Open the I2C device
-  
-  ioctl(I2CFile, I2C_SLAVE, ADS_address);   // Specify the address of the I2C Slave to communicate with
-
-  //microphone_init(I2CFile, ADS_address);
-
-
-  // These three bytes are written to the ADS1115 to set the config register and start a conversion 
-  writeBuf[0] = 1;          // let pointer register to select config reg
-
-  //edit config register
-  writeBuf[1] = 0xC2;       // This sets the 8 MSBs of the config register (bits 15-8) to 11000010  
-  writeBuf[2] = 0x03;       // This sets the 8 LSBs of the config register (bits 7-0) to 00000011
-      
-  // Write writeBuf to the ADS1115, the 3 specifies the number of bytes we are writing,
-  // this begins a single conversion
-  write(I2CFile, writeBuf, 3);  
-
-    // Initialize the buffer used to read data from the ADS1115 to 0
-  readBuf[0]= 0;        
-  readBuf[1]= 0;
-
-  // Wait for the conversion to complete, this requires bit 15 to change from 0->1
-  // while ((readBuf[0] & 0x80) == 0)  // readBuf[0] contains 8 MSBs of config register, AND with 10000000 to select bit 15
-  // {
-  //     read(I2CFile, readBuf, 2);    // Read the config register into readBuf to update the conversion status
-  // }
-
-  writeBuf[0] = 0;                  // select conversion register 
-  write(I2CFile, writeBuf, 1);
-  float current = 0;
-  float threshold = 1.6;
-  while(1){
-    read(I2CFile, readBuf, 2);        // Read the contents of the conversion register into readBuf
-
-    val = readBuf[0] << 8 | readBuf[1];   // Combine the two bytes of readBuf into a single 16 bit result
-    current = (float)val*4.096/32767.0;
-    printf("Voltage Reading %f (V) \n", current);    // Print the result to terminal, first convert from binary value to mV
-    // printf("percentage %f %% \n", percentage);
-     float difference = current - threshold;
-    //printf("current is: %f (V) , previous is: %f (V, different: %f) \n", current, previous, difference);
-    
-    sleep(0.5);//sampling every 0.5 second (reduce for faster sampling)
-    if(difference<0){
-      printf("Blow!\n");
-    }
-
-    //send signal to stop the process
-    if(!flag){
-      close(I2CFile);
-      exit(0);
-    }
-    //previous = current;
-  }
-        
-  close(I2CFile);
-  
-  return 0;
-
-}
-```
-
-### servo.c
-
-```c
-int servo_position(int position);
-
-int main(void){
-  wiringPiSetupGpio();
-  
-  pinMode(17,PWM_OUTPUT);
-
-  softPwmCreate(17,servo_position(2),100);
-  delay(500);
-
-  softPwmWrite(17,servo_position(0));
-  delay(500);
-
-  softPwmWrite(17,servo_position(1));
-  delay(500);
-
-    softPwmWrite(17,servo_position(2));
-  delay(500);
-
-  softPwmWrite(17,servo_position(3));
-  delay(500);
-
-  softPwmWrite(17,servo_position(4));
-  delay(500);
-
-  softPwmStop(17);
-  
-  return 0;
-}
-
-int servo_position(int position){ //0 25 90 135 180
-  int pulse;
-  switch (position)
-  {
-    case 0:
-      pulse = 1;
-      break;
-    case 1:
-      pulse = 5;
-      break;
-    case 2:
-      pulse = 9.5;
-      break;
-    case 3:
-      pulse = 15;
-      break;
-    case 4:
-      pulse = 21;
-      break;
-    default:
-      pulse = 1;
-      break;
-    return pulse;
-  }
-}
-```
-[Back To The Top](#read-me-template)
+[Back To The Top](##Line-Follower-Treasure-Hunt-Robot)
 
 ---
 
-## References
+## Test Result
+The robot when over 20 tests with `95%` of successful rate and found the treasure within `60 seconds`. The failed test encounters only for the sernario where the IR sensor was perpendicular to the line which made it thought that it hit the treasure and stop as shown in ***Figure 3*** below.  
 
-- Wiring Pi - [WiringPi](http://wiringpi.com)
-- Controlling the Raspberry Pi camera from C - [Ceptimus](http://ceptimus.co.uk/?p=91)
-- RPi and I2C Analog-Digital Converter - [University of Cambridge OpebLabTools](http://openlabtools.eng.cam.ac.uk/Resources/Datalog/RPi_ADS1115/)
+![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/cornercase.png?raw=true)
+***Figure 3: Sernario where the robot more likely to fail***
 
-[Back To The Top](#Anti-car-Theft-Camera-System)
+[Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
 
 ---
 
@@ -353,7 +146,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[Back To The Top](#Anti-car-Theft-Camera-System)
+[Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
 
 ---
 
@@ -364,5 +157,5 @@ SOFTWARE.
 - Email - [phat.le@sjsu.edu]()
 
 
-[Back To The Top](#Anti-car-Theft-Camera-System)
+[Back To The Top](##Line-Follower-Treasure-Hunt-Robot)
 
