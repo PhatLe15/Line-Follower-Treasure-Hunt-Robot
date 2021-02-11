@@ -96,7 +96,7 @@ The first task was to test the **IR reflectance** of the sensor. By obtaining th
 When the robot stayed at the center position, it should go forward until the next instruction came. If the robot was not at the center, it should fix its path back to the center. In addition, the robot should be able to handle corner cases such as when it hit the dead end of the line or being obstructed by surrounding object as shown in ***Figure 1*** below. 
 
 ![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/treasuremap.png?raw=true)
-***Figure 1: The treasure map***
+#### *Figure 1: The treasure map*
 
 To handle the wall obstruction, **bumper sensor modules** were needed with `Systic interrupts` approach to quickly backup and return to the path. Theoretically, when any of the bumps were activated, meaning there was a wall exist, the robot should back up and search for a new path. 
 
@@ -106,7 +106,7 @@ When combining all the components, the finite state machine was used to easily c
 
 
 ![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/FSM.png?raw=true)
-####*Figure 2: The robot state machine*
+#### *Figure 2: The robot state machine*
 
 [Back To The Top](##Line-Follower-Treasure-Hunt-Robot)
 
@@ -116,7 +116,7 @@ When combining all the components, the finite state machine was used to easily c
 The robot when over 20 tests with `95%` of successful rate and found the treasure within `60 seconds`. The failed test encounters only for the sernario where the IR sensor was perpendicular to the line which made it thought that it hit the treasure and stop as shown in ***Figure 3*** below.  
 
 ![asdf](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/cornercase.png?raw=true)
-####*Figure 3: Sernario where the robot more likely to fail**
+#### *Figure 3: Sernario where the robot more likely to fail**
 
 [Back To The Top](#Line-Follower-Treasure-Hunt-Robot)
 
