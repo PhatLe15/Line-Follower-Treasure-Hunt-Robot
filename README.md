@@ -1,6 +1,6 @@
 # Line Follower Treasure Hunt Robot
 
-![sdfg](http://g.recordit.co/ITJK7HwLOy.gif)
+![Sample Gif](https://github.com/PhatLe15/Line-Follower-Treasure-Hunt-Robot/blob/main/Demo.gif?raw=true)
 
 
 ### Table of Contents
